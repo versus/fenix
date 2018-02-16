@@ -6,22 +6,24 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+
+	"github.com/joho/godotenv"
+	"log"
+
+	"os"
 )
 
 func main() {
 
-	/*
-	aws_user := os.Getenv("AWS_ACCESS_KEY_ID")
-	aws_pass := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Error loading .env. file")
+	}
 
-	sess := aws.Creds(aws_user, aws_pass, "")
-	svc := ec2.New(sess, "us-west-1", nil)
-	*/
-
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")},
-	)
+	log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
+	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-west-1")})
 	svc := ec2.New(sess)
+
 
 	// Call to get detailed information on each instance
     result, err := svc.DescribeInstances(nil)
