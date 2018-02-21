@@ -3,6 +3,8 @@ package main
 
 /*
 
+
+
 var lastPercentage = 0;var lastBlocksToGo = 0;var timeInterval = 10000;
 setInterval(function(){
     var percentage = eth.syncing.currentBlock/eth.syncing.highestBlock*100;

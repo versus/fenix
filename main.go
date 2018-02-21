@@ -7,10 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 
+	"gopkg.in/cheggaaa/pb.v1"
 	"github.com/joho/godotenv"
 	"log"
 
 	"os"
+	"time"
 )
 
 func main() {
@@ -20,6 +22,18 @@ func main() {
 		log.Println("Error loading .env. file")
 	}
 
+
+	count := 100
+	bar := pb.StartNew(count)
+	bar.SetMaxWidth(80)
+	bar.ShowTimeLeft = false
+	for i := 0; i < count;  {
+		//bar.Increment()
+		bar.Add64(5)
+		i = i + 5
+		time.Sleep(1*time.Second)
+	}
+	bar.FinishPrint("The End!")
 	log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-west-1")})
 	svc := ec2.New(sess)
