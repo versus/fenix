@@ -14,6 +14,8 @@ import (
 	"os"
 	"time"
 	"flag"
+	"net/url"
+	"strings"
 )
 
 const (
@@ -52,16 +54,67 @@ func main() {
 	log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 
 	if *flagDry == false {
-	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-west-1")})
+	sess, err := session.NewSession(&aws.Config{Region: aws.String(os.Getenv("AWS_REGION"))})
 	svc := ec2.New(sess)
 
-	// Call to get detailed information on each instance
-    result, err := svc.DescribeInstances(nil)
-    if err != nil {
-        fmt.Println("Error", err)
-    } else {
-        fmt.Println("Success", result)
-    }
+
+		params := &ec2.DescribeInstancesInput{
+			Filters: []*ec2.Filter{
+				&ec2.Filter{
+					Name: aws.String("instance-state-name"),
+					Values: []*string{
+						aws.String("running"),
+						aws.String("pending"),
+					},
+				},
+			},
+		}
+
+		// TODO: Actually care if we can't connect to a host
+		resp, err := svc.DescribeInstances(params)
+		if err != nil {
+		      panic(err)
+		 }
+		fmt.Println(resp)
+		// Loop through the instances. They don't always have a name-tag so set it
+		// to None if we can't find anything.
+		for idx, _ := range resp.Reservations {
+			for _, inst := range resp.Reservations[idx].Instances {
+
+				// We need to see if the Name is one of the tags. It's not always
+				// present and not required in Ec2.
+				name := "None"
+				for _, keys := range inst.Tags {
+					if *keys.Key == "Name" {
+						name = url.QueryEscape(*keys.Value)
+					}
+				}
+
+				important_vals := []*string{
+					inst.InstanceId,
+					&name,
+					inst.PrivateIpAddress,
+					inst.InstanceType,
+					inst.PublicIpAddress,
+
+				}
+
+				// Convert any nil value to a printable string in case it doesn't
+				// doesn't exist, which is the case with certain values
+				output_vals := []string{}
+				for _, val := range important_vals {
+					if val != nil {
+						output_vals = append(output_vals, *val)
+					} else {
+						output_vals = append(output_vals, "None")
+					}
+				}
+				// The values that we care about, in the order we want to print them
+				fmt.Println(strings.Join(output_vals, " "))
+			}
+		}
+
+
 
     /*
     input := &ec2.CreateSnapshotInput{
