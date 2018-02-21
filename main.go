@@ -13,15 +13,29 @@ import (
 
 	"os"
 	"time"
+	"flag"
+)
+
+const (
+	Version = "v0.0.4"
+	Author  = " by Valentyn Nastenko [versus.dev@gmail.com]"
 )
 
 func main() {
 
+	log.Println("fenix ", Version, Author)
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Error loading .env. file")
 	}
 
+	flagInstanceId := flag.String("instance", "", "AWS instanceId to replicate")
+	flagDry := flag.Bool("dry", false, "true is Dry Run")
+	flag.Parse()
+
+	log.Println(flagInstanceId)
+
+	go func() {
 	count := 100
 	bar := pb.StartNew(count)
 	bar.SetMaxWidth(80)
@@ -33,7 +47,11 @@ func main() {
 		time.Sleep(1*time.Second)
 	}
 	bar.FinishPrint("The End!")
+	}()
+
 	log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
+
+	if *flagDry == false {
 	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-west-1")})
 	svc := ec2.New(sess)
 
@@ -97,5 +115,6 @@ func main() {
 		fmt.Println("snap SnapshotId =", snap.SnapshotId)
 	}
 
+	}
 }
 
