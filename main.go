@@ -22,7 +22,6 @@ func main() {
 		log.Println("Error loading .env. file")
 	}
 
-
 	count := 100
 	bar := pb.StartNew(count)
 	bar.SetMaxWidth(80)
@@ -37,7 +36,6 @@ func main() {
 	log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 	sess, err := session.NewSession(&aws.Config{Region: aws.String("us-west-1")})
 	svc := ec2.New(sess)
-
 
 	// Call to get detailed information on each instance
     result, err := svc.DescribeInstances(nil)
@@ -77,7 +75,6 @@ func main() {
 		},
 	}
 
-
 	snapshots, err := svc.DescribeSnapshots(snapInput)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -99,7 +96,6 @@ func main() {
 		snap := snapshots.Snapshots[indx]
 		fmt.Println("snap SnapshotId =", snap.SnapshotId)
 	}
-
 
 }
 
