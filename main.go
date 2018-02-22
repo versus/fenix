@@ -23,6 +23,8 @@ const (
 	Author  = " by Valentyn Nastenko [versus.dev@gmail.com]"
 )
 
+//https://github.com/rancher/convoy/blob/master/ebs/ebs_service.go
+
 func main() {
 
 	log.Println("fenix ", Version, Author)
@@ -90,12 +92,43 @@ func main() {
 					}
 				}
 
+				hdd := inst.BlockDeviceMappings
+                log.Println("count block devices ", len(hdd))
+                log.Println("dev 1: ", hdd[1].Ebs.VolumeId)
+				input := &ec2.CreateSnapshotInput{
+					Description: aws.String("This is data volume snapshot."),
+					VolumeId:    hdd[1].Ebs.VolumeId,
+				}
+
+				//res, err := svc.CreateSnapshotRequest(input)
+				res, err := svc.CreateSnapshot(input)
+				if err != nil {
+					if aerr, ok := err.(awserr.Error); ok {
+						switch aerr.Code() {
+						default:
+							fmt.Println(aerr.Error())
+						}
+					} else {
+						// Print the error, cast err to awserr.Error to get the Code and
+						// Message from an error.
+						fmt.Println(err.Error())
+					}
+					return
+				}
+
+				for  i:=0; i< 10; i++ {
+					fmt.Println(res)
+					time.Sleep(2 * time.Second)
+				}
+				fmt.Println(res)
+
 				important_vals := []*string{
 					inst.InstanceId,
 					&name,
 					inst.PrivateIpAddress,
 					inst.InstanceType,
 					inst.PublicIpAddress,
+
 
 				}
 
@@ -116,29 +149,9 @@ func main() {
 
 
 
-    /*
-    input := &ec2.CreateSnapshotInput{
-		Description: aws.String("This is data volume snapshot."),
-		VolumeId:    aws.String("vol-05365510f241d4d94"),
-	}
 
-	res, err := svc.CreateSnapshot(input)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			default:
-				fmt.Println(aerr.Error())
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			fmt.Println(err.Error())
-		}
-		return
-	}
 
-	fmt.Println(res)
-    */
+
 
 	snapInput := &ec2.DescribeSnapshotsInput{
 		SnapshotIds: []*string{
