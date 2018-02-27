@@ -18,6 +18,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"strconv"
 )
 
 const (
@@ -40,7 +41,7 @@ func main() {
 	flag.Parse()
 
 	log.Println(flagInstanceId)
-
+/*
 	go func() {
 		count := 100
 		bar := pb.StartNew(count)
@@ -49,12 +50,13 @@ func main() {
 		for i := 0; i < count; {
 			//bar.Increment()
 			bar.Add64(5)
+
 			i = i + 5
 			time.Sleep(1 * time.Second)
 		}
 		bar.FinishPrint("The End!")
 	}()
-
+*/
 	log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 
 	if *flagDry == false {
@@ -149,7 +151,13 @@ func main() {
 			},
 		}
 
-		for i := 0; i < 10; i++ {
+		ticker := time.NewTicker(time.Second)
+		count := 100
+		bar := pb.StartNew(count)
+		bar.SetMaxWidth(80)
+		bar.ShowTimeLeft = false
+
+		for _ = range ticker.C {
 			snapshots, err := svc.DescribeSnapshots(snapInput)
 			if err != nil {
 				if aerr, ok := err.(awserr.Error); ok {
@@ -158,19 +166,24 @@ func main() {
 						fmt.Println(aerr.Error())
 					}
 				} else {
-					// Print the error, cast err to awserr.Error to get the Code and
-					// Message from an error.
 					fmt.Println(err.Error())
 				}
-				return
-			}
-
-			fmt.Println(snapshots)
-			if *snapshots.Snapshots[0].State == "completed" {
 				break
 			}
-			time.Sleep(2 * time.Second)
+
+			snapshot := snapshots.Snapshots[0]
+			percent , err := strconv.ParseInt(strings.Replace(*snapshot.Progress, "%", "", -1), 10, 64)
+			if err != nil {
+				log.Fatal("Error get percent: ", err.Error())
+			}
+			bar.Set(int(percent))
+			if  *snapshot.State == "completed" {
+				bar.Finish()
+				break
+			}
+
 		}
+		ticker.Stop()
 
 	}
 }
