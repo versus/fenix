@@ -1,4 +1,4 @@
-package main
+package awscl
 
 import (
 	"log"
@@ -9,17 +9,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/versus/fenix/utils"
 )
 
 type AWSClient struct {
-	ec2Client *ec2.EC2
+	Ec2Client *ec2.EC2
 	Region    string
 }
 
 func NewAWSClient() (*AWSClient, error) {
 	s := &AWSClient{}
 	ses, _ := session.NewSession(&aws.Config{Region: aws.String(os.Getenv("AWS_REGION"))})
-	s.ec2Client = ec2.New(ses)
+	s.Ec2Client = ec2.New(ses)
 	return s, nil
 }
 
@@ -35,9 +36,9 @@ func (cl *AWSClient) GetTags(resourceID string) (map[string]string, error) {
 		},
 	}
 
-	resp, err := cl.ec2Client.DescribeTags(params)
+	resp, err := cl.Ec2Client.DescribeTags(params)
 	if err != nil {
-		return nil, parseAwsError(err)
+		return nil, utils.ParseAwsError(err)
 	}
 
 	result := map[string]string{}
@@ -74,9 +75,9 @@ func (cl *AWSClient) AddTags(resourceID string, tags map[string]string) error {
 	}
 	params.Tags = ec2Tags
 
-	_, err := cl.ec2Client.CreateTags(params)
+	_, err := cl.Ec2Client.CreateTags(params)
 	if err != nil {
-		return parseAwsError(err)
+		return utils.ParseAwsError(err)
 	}
 	return nil
 }
