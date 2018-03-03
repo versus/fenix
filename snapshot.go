@@ -11,8 +11,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/versus/fenix/awscl"
+	"github.com/versus/fenix/utils"
 	"gopkg.in/cheggaaa/pb.v1"
 )
+
+type FenixSnapshot interface {
+	CreateSnapshot(cl *awscl.AWSClient, request *CreateSnapshotRequest) (string, error)
+	WaitForSnapshotComplete(cl *awscl.AWSClient, snapshotID string) error
+}
 
 type CreateSnapshotRequest struct {
 	VolumeID    string
@@ -20,18 +27,14 @@ type CreateSnapshotRequest struct {
 	Tags        map[string]string
 }
 
-type SnapshotDescribeRequest struct {
-	SnapshotId string
-}
-
-func CreateSnapshot(cl *AWSClient, request *CreateSnapshotRequest) (string, error) {
+func CreateSnapshot(cl *awscl.AWSClient, request *CreateSnapshotRequest) (string, error) {
 	params := &ec2.CreateSnapshotInput{
 		VolumeId:    aws.String(request.VolumeID),
 		Description: aws.String(request.Description),
 	}
-	resp, err := cl.ec2Client.CreateSnapshot(params)
+	resp, err := cl.Ec2Client.CreateSnapshot(params)
 	if err != nil {
-		return "", parseAwsError(err)
+		return "", utils.ParseAwsError(err)
 	}
 	if request.Tags != nil {
 		if err := cl.AddTags(*resp.SnapshotId, request.Tags); err != nil {
@@ -41,7 +44,7 @@ func CreateSnapshot(cl *AWSClient, request *CreateSnapshotRequest) (string, erro
 	return *resp.SnapshotId, nil
 }
 
-func WaitForSnapshotComplete(ec2Client *ec2.EC2, snapshotID string) error {
+func WaitForSnapshotComplete(cl *awscl.AWSClient, snapshotID string) error {
 	snapInput := &ec2.DescribeSnapshotsInput{
 		SnapshotIds: []*string{
 			//aws.String("snap-0f411b956abd7ece8"),
@@ -55,7 +58,7 @@ func WaitForSnapshotComplete(ec2Client *ec2.EC2, snapshotID string) error {
 	bar.ShowTimeLeft = false
 
 	for _ = range ticker.C {
-		snapshots, err := ec2Client.DescribeSnapshots(snapInput)
+		snapshots, err := cl.Ec2Client.DescribeSnapshots(snapInput)
 		if err != nil {
 			if aerr, ok := err.(awserr.Error); ok {
 				switch aerr.Code() {

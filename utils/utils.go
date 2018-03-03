@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
-func parseAwsError(err error) error {
+func ParseAwsError(err error) error {
 	if err == nil {
 		return nil
 	}

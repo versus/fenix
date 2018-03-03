@@ -11,6 +11,8 @@ import (
 	"github.com/joho/godotenv"
 
 	"flag"
+
+	"github.com/versus/fenix/awscl"
 )
 
 const (
@@ -34,7 +36,7 @@ func main() {
 	log.Println(flagInstanceId)
 	//log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 
-	awsClient, err := NewAWSClient()
+	awsClient, err := awscl.NewAWSClient()
 	if err != nil {
 		log.Fatal("FATAL: error create connect to aws Error:", err)
 	}
@@ -51,7 +53,7 @@ func main() {
 		},
 	}
 
-	resp, err := awsClient.ec2Client.DescribeInstances(params)
+	resp, err := awsClient.Ec2Client.DescribeInstances(params)
 	if err != nil {
 		panic(err)
 	}
@@ -73,11 +75,12 @@ func main() {
 				Description: "This is data volume snapshot.",
 				Tags:        tags,
 			}
-			SnapshotId, err = CreateSnapshot(awsClient, &requestSnapshot)
+			var fx FenixSnapshot
+			SnapshotId, err = fx.CreateSnapshot(awsClient, &requestSnapshot)
 			if err != nil {
 				panic(err)
 			}
-			WaitForSnapshotComplete(awsClient.ec2Client, SnapshotId)
+			fx.WaitForSnapshotComplete(awsClient, SnapshotId)
 		}
 	}
 
