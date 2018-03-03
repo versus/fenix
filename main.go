@@ -34,7 +34,7 @@ func main() {
 	log.Println(flagInstanceId)
 	//log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 
-	awsClient, _ := NewEc2Instance()
+	awsClient, _ := NewAWSClient()
 
 	params := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
