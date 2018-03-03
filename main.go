@@ -28,13 +28,16 @@ func main() {
 		log.Println("Error loading .env. file")
 	}
 
-	flagInstanceId := flag.String("instance", "", "AWS instanceId to replicate")
+	flagInstanceId := flag.String("instance", "", "AWS instanceId for replicate")
 	flag.Parse()
 
 	log.Println(flagInstanceId)
 	//log.Println(os.Getenv("AWS_ACCESS_KEY_ID"))
 
-	awsClient, _ := NewAWSClient()
+	awsClient, err := NewAWSClient()
+	if err != nil {
+		log.Fatal("FATAL: error create connect to aws Error:", err)
+	}
 
 	params := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
@@ -61,7 +64,7 @@ func main() {
 			log.Println("count block devices ", len(hdd))
 			log.Println("dev 1: ", hdd[1].Ebs.VolumeId)
 			resurceId := *hdd[1].Ebs.VolumeId
-			tags, err := GetTags(awsClient.ec2Client, resurceId)
+			tags, err := awsClient.GetTags(resurceId)
 			if err != nil {
 				log.Println("Error get tags", err)
 			}
@@ -70,7 +73,7 @@ func main() {
 				Description: "This is data volume snapshot.",
 				Tags:        tags,
 			}
-			SnapshotId, err = CreateSnapshot(awsClient.ec2Client, &requestSnapshot)
+			SnapshotId, err = CreateSnapshot(awsClient, &requestSnapshot)
 			if err != nil {
 				panic(err)
 			}

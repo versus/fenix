@@ -24,17 +24,17 @@ type SnapshotDescribeRequest struct {
 	SnapshotId string
 }
 
-func CreateSnapshot(ec2Client *ec2.EC2, request *CreateSnapshotRequest) (string, error) {
+func CreateSnapshot(cl *AWSClient, request *CreateSnapshotRequest) (string, error) {
 	params := &ec2.CreateSnapshotInput{
 		VolumeId:    aws.String(request.VolumeID),
 		Description: aws.String(request.Description),
 	}
-	resp, err := ec2Client.CreateSnapshot(params)
+	resp, err := cl.ec2Client.CreateSnapshot(params)
 	if err != nil {
 		return "", parseAwsError(err)
 	}
 	if request.Tags != nil {
-		if err := AddTags(ec2Client, *resp.SnapshotId, request.Tags); err != nil {
+		if err := cl.AddTags(*resp.SnapshotId, request.Tags); err != nil {
 			log.Println("Unable to tag %v with %v, but continue", *resp.SnapshotId, request.Tags)
 		}
 	}
