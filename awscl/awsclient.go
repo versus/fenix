@@ -13,8 +13,11 @@ import (
 )
 
 type AWSClient struct {
-	Ec2Client *ec2.EC2
-	Region    string
+	Ec2Client    *ec2.EC2
+	Region       string
+	SourceVolume *ec2.Volume
+	TargetVolume *ec2.Volume
+	Snapshot     *ec2.Snapshot
 }
 
 func NewAWSClient() (*AWSClient, error) {
@@ -59,7 +62,7 @@ func (cl *AWSClient) AddTags(resourceID string, tags map[string]string) error {
 	if tags == nil {
 		return nil
 	}
-	log.Println("Adding tags for %v, as %v", resourceID, tags)
+	log.Println("Adding tags ", resourceID, tags)
 	params := &ec2.CreateTagsInput{
 		Resources: []*string{
 			aws.String(resourceID),

@@ -27,28 +27,28 @@ type CreateSnapshotRequest struct {
 	Tags        map[string]string
 }
 
-func CreateSnapshot(cl *awscl.AWSClient, request *CreateSnapshotRequest) (string, error) {
+func CreateSnapshot(cl *awscl.AWSClient, request *CreateSnapshotRequest) (*ec2.Snapshot, error) {
 	params := &ec2.CreateSnapshotInput{
 		VolumeId:    aws.String(request.VolumeID),
 		Description: aws.String(request.Description),
 	}
 	resp, err := cl.Ec2Client.CreateSnapshot(params)
 	if err != nil {
-		return "", utils.ParseAwsError(err)
+		return nil, utils.ParseAwsError(err)
 	}
 	if request.Tags != nil {
 		if err := cl.AddTags(*resp.SnapshotId, request.Tags); err != nil {
 			log.Println("Unable to tag %v with %v, but continue", *resp.SnapshotId, request.Tags)
 		}
 	}
-	return *resp.SnapshotId, nil
+	return resp, nil
 }
 
-func WaitForSnapshotComplete(cl *awscl.AWSClient, snapshotID string) error {
+func WaitForSnapshotComplete(cl *awscl.AWSClient) error {
 	snapInput := &ec2.DescribeSnapshotsInput{
 		SnapshotIds: []*string{
 			//aws.String("snap-0f411b956abd7ece8"),
-			&snapshotID,
+			cl.Snapshot.SnapshotId,
 		},
 	}
 	ticker := time.NewTicker(time.Second)

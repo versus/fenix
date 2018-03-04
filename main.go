@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
@@ -23,7 +21,6 @@ const (
 //https://github.com/rancher/convoy/blob/master/ebs/ebs_service.go
 
 func main() {
-	var SnapshotId string
 	log.Println("fenix ", Version, Author)
 	err := godotenv.Load()
 	if err != nil {
@@ -48,6 +45,7 @@ func main() {
 				Values: []*string{
 					aws.String("running"),
 					aws.String("pending"),
+					aws.String("stopped"),
 				},
 			},
 		},
@@ -57,15 +55,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(resp)
 
 	for idx := range resp.Reservations {
 		for _, inst := range resp.Reservations[idx].Instances {
 
 			hdd := inst.BlockDeviceMappings
 			log.Println("count block devices ", len(hdd))
-			log.Println("dev 1: ", hdd[1].Ebs.VolumeId)
+			log.Println("dev 1: ", hdd[1].Ebs)
 			resurceId := *hdd[1].Ebs.VolumeId
+
+			awsClient.SourceVolume, err = GetVolume(awsClient, resurceId)
+			if err != nil {
+				log.Println("Error get volume ", err)
+			}
+
+			log.Println("Volume: ", awsClient.SourceVolume)
+
 			tags, err := awsClient.GetTags(resurceId)
 			if err != nil {
 				log.Println("Error get tags", err)
@@ -75,13 +80,12 @@ func main() {
 				Description: "This is data volume snapshot.",
 				Tags:        tags,
 			}
-			var fx FenixSnapshot
-			SnapshotId, err = fx.CreateSnapshot(awsClient, &requestSnapshot)
+
+			awsClient.Snapshot, err = CreateSnapshot(awsClient, &requestSnapshot)
 			if err != nil {
 				panic(err)
 			}
-			fx.WaitForSnapshotComplete(awsClient, SnapshotId)
+			WaitForSnapshotComplete(awsClient)
 		}
 	}
-
 }

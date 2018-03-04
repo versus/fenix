@@ -1,5 +1,14 @@
 package main
 
+import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/versus/fenix/awscl"
+	"github.com/versus/fenix/utils"
+)
+
 /*
 import (
 	"fmt"
@@ -121,21 +130,20 @@ func (s *ebsService) CreateVolume(request *CreateEBSVolumeRequest) (string, erro
 	return volumeID, nil
 }
 
-func (s *ebsService) GetVolume(volumeID string) (*ec2.Volume, error) {
-	sleepBeforeRetry()
+*/
+
+func GetVolume(cl *awscl.AWSClient, volumeID string) (*ec2.Volume, error) {
 	params := &ec2.DescribeVolumesInput{
 		VolumeIds: []*string{
 			aws.String(volumeID),
 		},
 	}
-	volumes, err := s.ec2Client.DescribeVolumes(params)
+	volumes, err := cl.Ec2Client.DescribeVolumes(params)
 	if err != nil {
-		return nil, parseAwsError(err)
+		return nil, utils.ParseAwsError(err)
 	}
 	if len(volumes.Volumes) != 1 {
 		return nil, fmt.Errorf("Cannot find volume %v", volumeID)
 	}
 	return volumes.Volumes[0], nil
 }
-
-*/
