@@ -72,8 +72,6 @@ func main() {
 		for _, inst := range resp.Reservations[idx].Instances {
 
 			hdd := inst.BlockDeviceMappings
-			log.Println("count block devices ", len(hdd))
-			log.Println("dev 1: ", hdd[1].Ebs)
 			resurceId := *hdd[1].Ebs.VolumeId
 
 			awsClient.SourceVolume, err = GetVolume(awsClient, resurceId)
@@ -83,21 +81,26 @@ func main() {
 
 			log.Println("Volume: ", awsClient.SourceVolume)
 
-			tags, err := awsClient.GetTags(resurceId)
-			if err != nil {
-				log.Println("Error get tags", err)
-			}
-			requestSnapshot := CreateSnapshotRequest{
-				VolumeID:    resurceId,
-				Description: "This is data volume snapshot.",
-				Tags:        tags,
-			}
-
-			awsClient.Snapshot, err = CreateSnapshot(awsClient, &requestSnapshot)
-			if err != nil {
-				panic(err)
-			}
-			WaitForSnapshotComplete(awsClient)
 		}
 	}
+
+	tags, err := awsClient.GetTags(*awsClient.SourceVolume.VolumeId)
+	if err != nil {
+		log.Println("Error get tags", err)
+	}
+
+	strDate := "This is data volume from " + *awsClient.SourceVolume.VolumeId
+
+	requestSnapshot := CreateSnapshotRequest{
+		VolumeID:    *awsClient.SourceVolume.VolumeId,
+		Description: strDate,
+		Tags:        tags,
+	}
+
+	awsClient.Snapshot, err = CreateSnapshot(awsClient, &requestSnapshot)
+	if err != nil {
+		panic(err)
+	}
+
+	WaitForSnapshotComplete(awsClient)
 }
