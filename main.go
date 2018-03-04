@@ -27,7 +27,7 @@ func main() {
 		log.Println("Error loading .env. file")
 	}
 
-	flagInstanceId := flag.String("instance", "", "AWS instanceId for replicate")
+	flagInstanceId := flag.String("instance", "i-010e8790d25d00bca", "AWS instanceId for replicate")
 	flag.Parse()
 
 	log.Println(flagInstanceId)
@@ -38,14 +38,26 @@ func main() {
 		log.Fatal("FATAL: error create connect to aws Error:", err)
 	}
 
+	/*
+		params := &ec2.DescribeInstancesInput{
+			Filters: []*ec2.Filter{
+				{
+					Name: aws.String("instance-state-name"),
+					Values: []*string{
+						aws.String("running"),
+						aws.String("pending"),
+						aws.String("stopped"),
+					},
+				},
+			},
+		}
+	*/
 	params := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String("instance-state-name"),
+				Name: aws.String("instance-id"),
 				Values: []*string{
-					aws.String("running"),
-					aws.String("pending"),
-					aws.String("stopped"),
+					aws.String(*flagInstanceId),
 				},
 			},
 		},
