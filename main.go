@@ -18,7 +18,7 @@ const (
 	Author  = " by Valentyn Nastenko [versus.dev@gmail.com]"
 )
 
-//https://github.com/rancher/convoy/blob/master/ebs/ebs_service.go
+
 
 func main() {
 	log.Println("fenix ", Version, Author)
